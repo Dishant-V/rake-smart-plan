@@ -11,13 +11,22 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Loader2, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import OrderForm from "./OrderForm";
 
 const MaterialsList = () => {
   const [materials, setMaterials] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedMaterial, setSelectedMaterial] = useState<any>(null);
+  const [orderDialogOpen, setOrderDialogOpen] = useState(false);
 
   useEffect(() => {
     loadMaterials();
@@ -41,9 +50,8 @@ const MaterialsList = () => {
   };
 
   const handleOrder = (material: any) => {
-    toast.info(
-      `Order form for ${material.name} - coming in next iteration`
-    );
+    setSelectedMaterial(material);
+    setOrderDialogOpen(true);
   };
 
   if (loading) {
@@ -65,61 +73,79 @@ const MaterialsList = () => {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <Card className="glass-card">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Material</TableHead>
-              <TableHead>Code</TableHead>
-              <TableHead>Price/Ton</TableHead>
-              <TableHead>Unit</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Action</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {materials.map((material, index) => (
-              <motion.tr
-                key={material.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
-                className="group hover:bg-muted/50 transition-colors"
-              >
-                <TableCell className="font-medium">{material.name}</TableCell>
-                <TableCell>
-                  <Badge variant="outline">{material.material_code}</Badge>
-                </TableCell>
-                <TableCell>₹{material.base_price_per_ton}</TableCell>
-                <TableCell>{material.unit}</TableCell>
-                <TableCell>
-                  {material.hazard_flag ? (
-                    <Badge variant="destructive">Hazardous</Badge>
-                  ) : (
-                    <Badge variant="secondary">Standard</Badge>
-                  )}
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    size="sm"
-                    className="bg-gradient-steel hover:opacity-90"
-                    onClick={() => handleOrder(material)}
-                  >
-                    <ShoppingCart className="mr-2 h-4 w-4" />
-                    Order
-                  </Button>
-                </TableCell>
-              </motion.tr>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
-    </motion.div>
+    <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <Card className="glass-card">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Material</TableHead>
+                <TableHead>Code</TableHead>
+                <TableHead>Price/Ton</TableHead>
+                <TableHead>Unit</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {materials.map((material, index) => (
+                <motion.tr
+                  key={material.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  className="group hover:bg-muted/50 transition-colors"
+                >
+                  <TableCell className="font-medium">{material.name}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{material.material_code}</Badge>
+                  </TableCell>
+                  <TableCell>₹{material.base_price_per_ton}</TableCell>
+                  <TableCell>{material.unit}</TableCell>
+                  <TableCell>
+                    {material.hazard_flag ? (
+                      <Badge variant="destructive">Hazardous</Badge>
+                    ) : (
+                      <Badge variant="secondary">Standard</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      size="sm"
+                      className="bg-gradient-steel hover:opacity-90"
+                      onClick={() => handleOrder(material)}
+                    >
+                      <ShoppingCart className="mr-2 h-4 w-4" />
+                      Order
+                    </Button>
+                  </TableCell>
+                </motion.tr>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      </motion.div>
+
+      <Dialog open={orderDialogOpen} onOpenChange={setOrderDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Place Order</DialogTitle>
+          </DialogHeader>
+          {selectedMaterial && (
+            <OrderForm
+              materialId={selectedMaterial.id}
+              materialName={selectedMaterial.name}
+              basePrice={selectedMaterial.base_price_per_ton}
+              onClose={() => setOrderDialogOpen(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
