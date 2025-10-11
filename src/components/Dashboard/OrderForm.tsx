@@ -27,8 +27,6 @@ const OrderForm = ({ materialId, materialName, basePrice, onClose }: OrderFormPr
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     quantity: "",
-    pickupType: "plant",
-    pickupLocation: "",
     deliveryLocation: "",
     deadline: "",
   });
@@ -50,6 +48,7 @@ const OrderForm = ({ materialId, materialName, basePrice, onClose }: OrderFormPr
       const totalCost = quantity * basePrice;
       const partialPayment = totalCost * 0.5; // 50% upfront
 
+      // ML model will determine optimal plant/warehouse based on delivery location
       const orderData: any = {
         customer_id: user.id,
         material_id: materialId,
@@ -61,13 +60,8 @@ const OrderForm = ({ materialId, materialName, basePrice, onClose }: OrderFormPr
         status: "new",
         payment_status: "none",
         payment_amount: 0,
+        // Plant/warehouse will be assigned by ML optimization
       };
-
-      if (formData.pickupType === "plant") {
-        orderData.pickup_location_plant_id = formData.pickupLocation;
-      } else {
-        orderData.pickup_location_warehouse_id = formData.pickupLocation;
-      }
 
       const { data, error } = await supabase
         .from("orders")
@@ -117,43 +111,17 @@ const OrderForm = ({ materialId, materialName, basePrice, onClose }: OrderFormPr
         </div>
 
         <div>
-          <Label htmlFor="pickupType">Pickup From</Label>
-          <Select
-            value={formData.pickupType}
-            onValueChange={(value) => setFormData({ ...formData, pickupType: value, pickupLocation: "" })}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="plant">Plant</SelectItem>
-              <SelectItem value="warehouse">Warehouse</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <Label htmlFor="pickupLocation">
-            {formData.pickupType === "plant" ? "Select Plant" : "Select Warehouse"}
-          </Label>
-          <Input
-            id="pickupLocation"
-            placeholder={`Enter ${formData.pickupType} ID or name`}
-            required
-            value={formData.pickupLocation}
-            onChange={(e) => setFormData({ ...formData, pickupLocation: e.target.value })}
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="deliveryLocation">Delivery Location</Label>
+          <Label htmlFor="deliveryLocation">Your Location</Label>
           <Input
             id="deliveryLocation"
-            placeholder="Enter delivery address"
+            placeholder="Enter your delivery address"
             required
             value={formData.deliveryLocation}
             onChange={(e) => setFormData({ ...formData, deliveryLocation: e.target.value })}
           />
+          <p className="text-xs text-muted-foreground mt-1">
+            Our ML model will automatically select the optimal plant/warehouse based on your location
+          </p>
         </div>
 
         <div>
