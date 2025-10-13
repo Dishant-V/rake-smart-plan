@@ -7,11 +7,11 @@ import {
   Factory,
   Warehouse,
   Package,
-  FileText,
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import InventoryTables from "./InventoryTables";
+import OrdersManagement from "./OrdersManagement";
 
 interface AdminDashboardProps {
   userId: string;
@@ -141,26 +141,6 @@ const AdminDashboard = ({ userId }: AdminDashboardProps) => {
         <h2 className="text-2xl font-bold mb-4">Quick Actions</h2>
         <div className="flex flex-wrap gap-4">
           <Button
-            variant="outline"
-            className="hover:bg-primary/10"
-            onClick={() =>
-              toast.info("New orders view - coming in next iteration")
-            }
-          >
-            <FileText className="mr-2 h-4 w-4" />
-            New Orders ({stats.newOrders})
-          </Button>
-          <Button
-            variant="outline"
-            className="hover:bg-primary/10"
-            onClick={() =>
-              toast.info("Pending orders view - coming in next iteration")
-            }
-          >
-            <FileText className="mr-2 h-4 w-4" />
-            Pending Orders ({stats.pendingOrders})
-          </Button>
-          <Button
             className="bg-gradient-steel hover:opacity-90"
             onClick={handleRakePrediction}
             disabled={loading}
@@ -170,6 +150,9 @@ const AdminDashboard = ({ userId }: AdminDashboardProps) => {
           </Button>
         </div>
       </Card>
+
+      {/* Orders Management */}
+      <OrdersManagement />
 
       {/* Inventory Tables */}
       <InventoryTables />
