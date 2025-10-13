@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,12 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+interface PickupLocation {
+  id: string;
+  name: string;
+  type: "plant" | "warehouse";
+}
+
 interface OrderFormProps {
   materialId: string;
   materialName: string;
@@ -25,11 +31,36 @@ interface OrderFormProps {
 const OrderForm = ({ materialId, materialName, basePrice, onClose }: OrderFormProps) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [pickupLocations, setPickupLocations] = useState<PickupLocation[]>([]);
   const [formData, setFormData] = useState({
     quantity: "",
     deliveryLocation: "",
     deadline: "",
+    pickupLocationId: "",
+    pickupLocationType: "" as "plant" | "warehouse" | "",
   });
+
+  useEffect(() => {
+    loadPickupLocations();
+  }, []);
+
+  const loadPickupLocations = async () => {
+    try {
+      const [plantsRes, warehousesRes] = await Promise.all([
+        supabase.from("plants").select("id, name"),
+        supabase.from("warehouses").select("id, name"),
+      ]);
+
+      const locations: PickupLocation[] = [
+        ...(plantsRes.data?.map(p => ({ id: p.id, name: p.name, type: "plant" as const })) || []),
+        ...(warehousesRes.data?.map(w => ({ id: w.id, name: w.name, type: "warehouse" as const })) || []),
+      ];
+
+      setPickupLocations(locations);
+    } catch (error) {
+      console.error("Error loading pickup locations:", error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,11 +75,15 @@ const OrderForm = ({ materialId, materialName, basePrice, onClose }: OrderFormPr
         return;
       }
 
+      if (!formData.pickupLocationId || !formData.pickupLocationType) {
+        toast.error("Please select a pickup location");
+        return;
+      }
+
       const quantity = parseFloat(formData.quantity);
       const totalCost = quantity * basePrice;
       const partialPayment = totalCost * 0.5; // 50% upfront
 
-      // ML model will determine optimal plant/warehouse based on delivery location
       const orderData: any = {
         customer_id: user.id,
         material_id: materialId,
@@ -60,7 +95,8 @@ const OrderForm = ({ materialId, materialName, basePrice, onClose }: OrderFormPr
         status: "new",
         payment_status: "none",
         payment_amount: 0,
-        // Plant/warehouse will be assigned by ML optimization
+        pickup_location_plant_id: formData.pickupLocationType === "plant" ? formData.pickupLocationId : null,
+        pickup_location_warehouse_id: formData.pickupLocationType === "warehouse" ? formData.pickupLocationId : null,
       };
 
       const { data, error } = await supabase
@@ -111,7 +147,33 @@ const OrderForm = ({ materialId, materialName, basePrice, onClose }: OrderFormPr
         </div>
 
         <div>
-          <Label htmlFor="deliveryLocation">Your Location</Label>
+          <Label htmlFor="pickupLocation">Pickup Location</Label>
+          <Select
+            value={formData.pickupLocationId}
+            onValueChange={(value) => {
+              const location = pickupLocations.find(l => l.id === value);
+              setFormData({
+                ...formData,
+                pickupLocationId: value,
+                pickupLocationType: location?.type || "",
+              });
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select pickup location" />
+            </SelectTrigger>
+            <SelectContent>
+              {pickupLocations.map((location) => (
+                <SelectItem key={location.id} value={location.id}>
+                  {location.name} ({location.type})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label htmlFor="deliveryLocation">Delivery Location</Label>
           <Input
             id="deliveryLocation"
             placeholder="Enter your delivery address"
@@ -119,9 +181,6 @@ const OrderForm = ({ materialId, materialName, basePrice, onClose }: OrderFormPr
             value={formData.deliveryLocation}
             onChange={(e) => setFormData({ ...formData, deliveryLocation: e.target.value })}
           />
-          <p className="text-xs text-muted-foreground mt-1">
-            Our ML model will automatically select the optimal plant/warehouse based on your location
-          </p>
         </div>
 
         <div>
