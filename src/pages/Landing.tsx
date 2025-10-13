@@ -41,9 +41,15 @@ const Landing = () => {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 md:py-32">
-        {/* Animated background gradients */}
-        <div className="absolute inset-0 bg-gradient-molten opacity-10 dark:opacity-20 animate-pulse" />
-        <div className="absolute inset-0 bg-gradient-steel opacity-5 dark:opacity-10" />
+        {/* Industrial steel-themed background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-background via-muted/30 to-background" />
+        <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]" 
+          style={{
+            backgroundImage: `repeating-linear-gradient(90deg, hsl(var(--primary)) 0px, transparent 1px, transparent 60px), 
+                             repeating-linear-gradient(0deg, hsl(var(--primary)) 0px, transparent 1px, transparent 60px)`,
+          }} 
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-60" />
 
         <div className="container mx-auto px-4 relative z-10">
           <motion.div
