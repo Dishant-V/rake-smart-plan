@@ -11,6 +11,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import InventoryTables from "./InventoryTables";
 
 interface AdminDashboardProps {
   userId: string;
@@ -170,13 +171,8 @@ const AdminDashboard = ({ userId }: AdminDashboardProps) => {
         </div>
       </Card>
 
-      {/* Inventory Comparison */}
-      <Card className="glass-card p-6">
-        <h2 className="text-2xl font-bold mb-4">Inventory Overview</h2>
-        <p className="text-muted-foreground">
-          Detailed inventory comparison coming in next iteration
-        </p>
-      </Card>
+      {/* Inventory Tables */}
+      <InventoryTables />
     </div>
   );
 };
