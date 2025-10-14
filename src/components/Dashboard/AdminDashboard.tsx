@@ -12,6 +12,8 @@ import {
 import { toast } from "sonner";
 import InventoryTables from "./InventoryTables";
 import OrdersManagement from "./OrdersManagement";
+import RakeInfo from "./RakeInfo";
+import WeatherForecast from "./WeatherForecast";
 
 interface AdminDashboardProps {
   userId: string;
@@ -150,6 +152,12 @@ const AdminDashboard = ({ userId }: AdminDashboardProps) => {
           </Button>
         </div>
       </Card>
+
+      {/* Rake Info and Weather Forecast */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <RakeInfo />
+        <WeatherForecast />
+      </div>
 
       {/* Orders Management */}
       <OrdersManagement />

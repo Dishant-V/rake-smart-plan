@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,12 +15,6 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-interface PickupLocation {
-  id: string;
-  name: string;
-  type: "plant" | "warehouse";
-}
-
 interface OrderFormProps {
   materialId: string;
   materialName: string;
@@ -31,36 +25,12 @@ interface OrderFormProps {
 const OrderForm = ({ materialId, materialName, basePrice, onClose }: OrderFormProps) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [pickupLocations, setPickupLocations] = useState<PickupLocation[]>([]);
   const [formData, setFormData] = useState({
     quantity: "",
     deliveryLocation: "",
     deadline: "",
-    pickupLocationId: "",
-    pickupLocationType: "" as "plant" | "warehouse" | "",
+    priority: "" as "high" | "medium" | "low" | "",
   });
-
-  useEffect(() => {
-    loadPickupLocations();
-  }, []);
-
-  const loadPickupLocations = async () => {
-    try {
-      const [plantsRes, warehousesRes] = await Promise.all([
-        supabase.from("plants").select("id, name"),
-        supabase.from("warehouses").select("id, name"),
-      ]);
-
-      const locations: PickupLocation[] = [
-        ...(plantsRes.data?.map(p => ({ id: p.id, name: p.name, type: "plant" as const })) || []),
-        ...(warehousesRes.data?.map(w => ({ id: w.id, name: w.name, type: "warehouse" as const })) || []),
-      ];
-
-      setPickupLocations(locations);
-    } catch (error) {
-      console.error("Error loading pickup locations:", error);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,8 +45,8 @@ const OrderForm = ({ materialId, materialName, basePrice, onClose }: OrderFormPr
         return;
       }
 
-      if (!formData.pickupLocationId || !formData.pickupLocationType) {
-        toast.error("Please select a pickup location");
+      if (!formData.priority) {
+        toast.error("Please select a priority level");
         return;
       }
 
@@ -95,8 +65,9 @@ const OrderForm = ({ materialId, materialName, basePrice, onClose }: OrderFormPr
         status: "new",
         payment_status: "none",
         payment_amount: 0,
-        pickup_location_plant_id: formData.pickupLocationType === "plant" ? formData.pickupLocationId : null,
-        pickup_location_warehouse_id: formData.pickupLocationType === "warehouse" ? formData.pickupLocationId : null,
+        priority: formData.priority,
+        pickup_location_plant_id: null,
+        pickup_location_warehouse_id: null,
       };
 
       const { data, error } = await supabase
@@ -147,29 +118,23 @@ const OrderForm = ({ materialId, materialName, basePrice, onClose }: OrderFormPr
         </div>
 
         <div>
-          <Label htmlFor="pickupLocation">Pickup Location</Label>
+          <Label htmlFor="priority">Priority Level</Label>
           <Select
-            value={formData.pickupLocationId}
-            onValueChange={(value) => {
-              const location = pickupLocations.find(l => l.id === value);
-              setFormData({
-                ...formData,
-                pickupLocationId: value,
-                pickupLocationType: location?.type || "",
-              });
-            }}
+            value={formData.priority}
+            onValueChange={(value) => setFormData({ ...formData, priority: value as "high" | "medium" | "low" })}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select pickup location" />
+              <SelectValue placeholder="Select priority level" />
             </SelectTrigger>
             <SelectContent>
-              {pickupLocations.map((location) => (
-                <SelectItem key={location.id} value={location.id}>
-                  {location.name} ({location.type})
-                </SelectItem>
-              ))}
+              <SelectItem value="high">High Priority</SelectItem>
+              <SelectItem value="medium">Medium Priority</SelectItem>
+              <SelectItem value="low">Low Priority</SelectItem>
             </SelectContent>
           </Select>
+          <p className="text-xs text-muted-foreground mt-1">
+            ML model will optimize pickup location based on priority and delivery location
+          </p>
         </div>
 
         <div>

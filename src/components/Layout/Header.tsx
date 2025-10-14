@@ -67,7 +67,7 @@ const Header = () => {
             Home
           </Link>
           <Link to="/materials" className="text-sm font-medium hover:text-primary transition-colors">
-            Materials
+            Inventory
           </Link>
           {session && (
             <Link

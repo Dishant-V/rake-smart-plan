@@ -10,6 +10,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import Header from "@/components/Layout/Header";
+import Footer from "@/components/Layout/Footer";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -83,7 +84,7 @@ const Landing = () => {
                 className="text-lg hover:bg-primary/10"
                 onClick={() => navigate("/materials")}
               >
-                Browse Materials
+                Browse Inventory
               </Button>
             </div>
           </motion.div>
@@ -158,20 +159,7 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border/50 py-8">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center mb-4 md:mb-0">
-              <Factory className="h-6 w-6 text-primary mr-2" />
-              <span className="font-bold">SAIL Rake DSS</span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              © 2025 SAIL. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

@@ -143,7 +143,7 @@ const CustomerDashboard = ({ userId }: CustomerDashboardProps) => {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold flex items-center">
               <Package className="mr-2 h-6 w-6 text-primary" />
-              Available Materials
+              Available Inventory
             </h2>
           </div>
           <MaterialsList />
