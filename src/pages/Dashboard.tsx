@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import Header from "@/components/Layout/Header";
+import Footer from "@/components/Layout/Footer";
 import CustomerDashboard from "@/components/Dashboard/CustomerDashboard";
 import AdminDashboard from "@/components/Dashboard/AdminDashboard";
 
@@ -53,15 +54,16 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 flex-1">
         {isAdmin ? (
           <AdminDashboard userId={userId!} />
         ) : (
           <CustomerDashboard userId={userId!} />
         )}
       </main>
+      <Footer />
     </div>
   );
 };

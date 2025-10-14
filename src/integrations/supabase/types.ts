@@ -196,6 +196,7 @@ export type Database = {
           payment_txn_id: string | null
           pickup_location_plant_id: string | null
           pickup_location_warehouse_id: string | null
+          priority: string | null
           quantity_tons: number
           status: Database["public"]["Enums"]["order_status"] | null
           total_cost: number
@@ -214,6 +215,7 @@ export type Database = {
           payment_txn_id?: string | null
           pickup_location_plant_id?: string | null
           pickup_location_warehouse_id?: string | null
+          priority?: string | null
           quantity_tons: number
           status?: Database["public"]["Enums"]["order_status"] | null
           total_cost: number
@@ -232,6 +234,7 @@ export type Database = {
           payment_txn_id?: string | null
           pickup_location_plant_id?: string | null
           pickup_location_warehouse_id?: string | null
+          priority?: string | null
           quantity_tons?: number
           status?: Database["public"]["Enums"]["order_status"] | null
           total_cost?: number

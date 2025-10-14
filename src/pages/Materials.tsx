@@ -1,12 +1,13 @@
 import Header from "@/components/Layout/Header";
+import Footer from "@/components/Layout/Footer";
 import MaterialsList from "@/components/Dashboard/MaterialsList";
 import { Package } from "lucide-react";
 
 const Materials = () => {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 flex-1">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2 flex items-center">
             <Package className="mr-3 h-10 w-10 text-primary" />
@@ -18,6 +19,7 @@ const Materials = () => {
         </div>
         <MaterialsList />
       </main>
+      <Footer />
     </div>
   );
 };
