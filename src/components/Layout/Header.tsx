@@ -10,7 +10,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Factory, LogOut, Moon, Sun, User } from "lucide-react";
+import {
+  Factory,
+  LogOut,
+  Moon,
+  Sun,
+  User,
+  BookOpen,
+  Info,
+  Phone,
+  FileText,
+  ChevronDown,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Session } from "@supabase/supabase-js";
 
@@ -20,16 +31,13 @@ const Header = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check initial theme
     const isDarkMode = document.documentElement.classList.contains("dark");
     setIsDark(isDarkMode);
 
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
     });
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -57,18 +65,54 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-lg">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
+        {/* Logo */}
+        <Link
+          to="/"
+          className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+        >
           <Factory className="h-8 w-8 text-primary" />
           <span className="text-xl font-bold">SAIL Rake DSS</span>
         </Link>
 
+        {/* Navigation */}
         <nav className="hidden md:flex items-center space-x-6">
-          <Link to="/" className="text-sm font-medium hover:text-primary transition-colors">
+          <Link
+            to="/"
+            className="text-sm font-medium hover:text-primary transition-colors"
+          >
             Home
           </Link>
-          <Link to="/materials" className="text-sm font-medium hover:text-primary transition-colors">
+          <Link
+            to="/materials"
+            className="text-sm font-medium hover:text-primary transition-colors"
+          >
             Inventory
           </Link>
+
+          {/* Resources Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center text-sm font-medium hover:text-primary transition-colors">
+                Resources
+                <ChevronDown className="ml-1 h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-40">
+              <DropdownMenuItem onClick={() => navigate("/about")}>
+                <Info className="mr-2 h-4 w-4" />
+                About Us
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/docs")}>
+                <BookOpen className="mr-2 h-4 w-4" />
+                Docs
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/contact")}>
+                <Phone className="mr-2 h-4 w-4" />
+                Contact
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           {session && (
             <Link
               to="/dashboard"
@@ -79,7 +123,9 @@ const Header = () => {
           )}
         </nav>
 
+        {/* Right section */}
         <div className="flex items-center space-x-4">
+          {/* Theme toggle */}
           <Button
             variant="ghost"
             size="icon"
@@ -89,6 +135,7 @@ const Header = () => {
             {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
 
+          {/* User Auth */}
           {session ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
