@@ -14,6 +14,7 @@ import InventoryTables from "./InventoryTables";
 import OrdersManagement from "./OrdersManagement";
 import RakeInfo from "./RakeInfo";
 import WeatherForecast from "./WeatherForecast";
+import RakePredictionDialog from "./RakePredictionDialog";
 
 interface AdminDashboardProps {
   userId: string;
@@ -28,6 +29,8 @@ const AdminDashboard = ({ userId }: AdminDashboardProps) => {
     pendingOrders: 0,
   });
   const [loading, setLoading] = useState(false);
+  const [predictions, setPredictions] = useState<any[]>([]);
+  const [showPredictions, setShowPredictions] = useState(false);
 
   useEffect(() => {
     loadStats();
@@ -65,7 +68,6 @@ const AdminDashboard = ({ userId }: AdminDashboardProps) => {
   const handleRakePrediction = async () => {
     setLoading(true);
     try {
-      // Call the rake prediction edge function
       const { data, error } = await supabase.functions.invoke(
         "rake-prediction",
         {
@@ -75,10 +77,15 @@ const AdminDashboard = ({ userId }: AdminDashboardProps) => {
 
       if (error) throw error;
 
-      toast.success("Rake prediction completed successfully!");
-      // Here you would typically show the results in a modal or navigate to results page
-      console.log("Prediction results:", data);
+      if (data.predictions && data.predictions.length > 0) {
+        setPredictions(data.predictions);
+        setShowPredictions(true);
+        toast.success(`Analyzed ${data.orderCount} order(s) successfully!`);
+      } else {
+        toast.info("No new orders to analyze");
+      }
     } catch (error: any) {
+      console.error("Rake prediction error:", error);
       toast.error(error.message || "Failed to run rake prediction");
     } finally {
       setLoading(false);
@@ -164,6 +171,13 @@ const AdminDashboard = ({ userId }: AdminDashboardProps) => {
 
       {/* Inventory Tables */}
       <InventoryTables />
+
+      {/* Rake Prediction Results Dialog */}
+      <RakePredictionDialog
+        open={showPredictions}
+        onOpenChange={setShowPredictions}
+        predictions={predictions}
+      />
     </div>
   );
 };
