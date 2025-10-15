@@ -20,9 +20,10 @@ serve(async (req) => {
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error('Supabase credentials not configured');
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const { orderId } = await req.json();
 
-    // Fetch new orders with material details
-    const { data: orders, error: ordersError } = await supabase
+    // Fetch specific order or new orders
+    let ordersQuery = supabase
       .from('orders')
       .select(`
         id,
@@ -31,9 +32,15 @@ serve(async (req) => {
         deadline,
         priority,
         materials (name, material_code)
-      `)
-      .eq('status', 'new')
-      .order('created_at', { ascending: false });
+      `);
+    
+    if (orderId) {
+      ordersQuery = ordersQuery.eq('id', orderId);
+    } else {
+      ordersQuery = ordersQuery.eq('status', 'new');
+    }
+    
+    const { data: orders, error: ordersError } = await ordersQuery.order('created_at', { ascending: false });
 
     if (ordersError) throw ordersError;
 

@@ -14,7 +14,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Package, Clock, CheckCircle, XCircle } from "lucide-react";
+import { Package, Clock, CheckCircle, XCircle, Sparkles } from "lucide-react";
+import RakePredictionDialog from "./RakePredictionDialog";
 
 interface Order {
   id: string;
@@ -26,12 +27,16 @@ interface Order {
   status: string;
   total_cost: number;
   created_at: string;
+  priority: string;
   customer_email: string;
 }
 
 const OrdersManagement = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [predicting, setPredicting] = useState<string | null>(null);
+  const [predictions, setPredictions] = useState<any[]>([]);
+  const [showPredictions, setShowPredictions] = useState(false);
 
   useEffect(() => {
     loadOrders();
@@ -76,12 +81,21 @@ const OrdersManagement = () => {
           status,
           total_cost,
           created_at,
-          materials (name),
-          profiles (email)
+          priority,
+          materials (name)
         `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
+
+      // Fetch customer emails separately
+      const customerIds = [...new Set(ordersData?.map((o: any) => o.customer_id) || [])];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, email")
+        .in("id", customerIds);
+
+      const profilesMap = new Map(profiles?.map(p => [p.id, p.email]) || []);
 
       const formatted = ordersData?.map((order: any) => ({
         id: order.id,
@@ -93,7 +107,8 @@ const OrdersManagement = () => {
         status: order.status,
         total_cost: order.total_cost,
         created_at: order.created_at,
-        customer_email: order.profiles?.email || "Unknown",
+        priority: order.priority || "medium",
+        customer_email: profilesMap.get(order.customer_id) || "Unknown",
       })) || [];
 
       setOrders(formatted);
@@ -118,6 +133,30 @@ const OrdersManagement = () => {
     } catch (error) {
       console.error("Error updating order:", error);
       toast.error("Failed to update order status");
+    }
+  };
+
+  const handleRakePrediction = async (orderId: string) => {
+    setPredicting(orderId);
+    try {
+      const { data, error } = await supabase.functions.invoke("rake-prediction", {
+        body: { orderId },
+      });
+
+      if (error) throw error;
+
+      if (data.predictions && data.predictions.length > 0) {
+        setPredictions(data.predictions);
+        setShowPredictions(true);
+        toast.success("Rake prediction completed!");
+      } else {
+        toast.info("Unable to generate prediction for this order");
+      }
+    } catch (error: any) {
+      console.error("Rake prediction error:", error);
+      toast.error(error.message || "Failed to run rake prediction");
+    } finally {
+      setPredicting(null);
     }
   };
 
@@ -157,6 +196,7 @@ const OrdersManagement = () => {
             <TableHead>Customer</TableHead>
             <TableHead>Material</TableHead>
             <TableHead>Quantity</TableHead>
+            <TableHead>Priority</TableHead>
             <TableHead>Delivery Location</TableHead>
             <TableHead>Deadline</TableHead>
             <TableHead>Status</TableHead>
@@ -167,7 +207,7 @@ const OrdersManagement = () => {
         <TableBody>
           {ordersList.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={showActions ? 8 : 7} className="text-center text-muted-foreground">
+              <TableCell colSpan={showActions ? 9 : 8} className="text-center text-muted-foreground">
                 No orders found
               </TableCell>
             </TableRow>
@@ -177,13 +217,35 @@ const OrdersManagement = () => {
                 <TableCell className="font-medium">{order.customer_email}</TableCell>
                 <TableCell>{order.material_name}</TableCell>
                 <TableCell>{order.quantity_tons} tons</TableCell>
+                <TableCell>
+                  <Badge
+                    variant={
+                      order.priority === "high"
+                        ? "destructive"
+                        : order.priority === "medium"
+                        ? "default"
+                        : "secondary"
+                    }
+                  >
+                    {order.priority}
+                  </Badge>
+                </TableCell>
                 <TableCell>{order.delivery_location}</TableCell>
                 <TableCell>{format(new Date(order.deadline), "PPP")}</TableCell>
                 <TableCell>{getStatusBadge(order.status)}</TableCell>
                 <TableCell>₹{order.total_cost.toLocaleString()}</TableCell>
                 {showActions && (
                   <TableCell>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
+                      <Button
+                        size="sm"
+                        className="bg-gradient-steel hover:opacity-90"
+                        onClick={() => handleRakePrediction(order.id)}
+                        disabled={predicting === order.id}
+                      >
+                        <Sparkles className="mr-1 h-3 w-3" />
+                        {predicting === order.id ? "Analyzing..." : "Predict"}
+                      </Button>
                       {order.status === "new" && (
                         <Button
                           size="sm"
@@ -240,31 +302,39 @@ const OrdersManagement = () => {
   }
 
   return (
-    <Card className="glass-card p-6">
-      <h2 className="text-2xl font-bold mb-6">Orders Management</h2>
-      <Tabs defaultValue="new" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="new">
-            New Orders ({newOrders.length})
-          </TabsTrigger>
-          <TabsTrigger value="pending">
-            Pending ({pendingOrders.length})
-          </TabsTrigger>
-          <TabsTrigger value="completed">
-            Completed ({completedOrders.length})
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="new" className="mt-4">
-          {renderOrdersTable(newOrders, true)}
-        </TabsContent>
-        <TabsContent value="pending" className="mt-4">
-          {renderOrdersTable(pendingOrders, true)}
-        </TabsContent>
-        <TabsContent value="completed" className="mt-4">
-          {renderOrdersTable(completedOrders, false)}
-        </TabsContent>
-      </Tabs>
-    </Card>
+    <>
+      <Card className="glass-card p-6">
+        <h2 className="text-2xl font-bold mb-6">Orders Management</h2>
+        <Tabs defaultValue="new" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="new">
+              New Orders ({newOrders.length})
+            </TabsTrigger>
+            <TabsTrigger value="pending">
+              Pending ({pendingOrders.length})
+            </TabsTrigger>
+            <TabsTrigger value="completed">
+              Completed ({completedOrders.length})
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="new" className="mt-4">
+            {renderOrdersTable(newOrders, true)}
+          </TabsContent>
+          <TabsContent value="pending" className="mt-4">
+            {renderOrdersTable(pendingOrders, true)}
+          </TabsContent>
+          <TabsContent value="completed" className="mt-4">
+            {renderOrdersTable(completedOrders, false)}
+          </TabsContent>
+        </Tabs>
+      </Card>
+
+      <RakePredictionDialog
+        open={showPredictions}
+        onOpenChange={setShowPredictions}
+        predictions={predictions}
+      />
+    </>
   );
 };
 

@@ -1,20 +1,16 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import {
   Factory,
   Warehouse,
   Package,
-  Sparkles,
 } from "lucide-react";
-import { toast } from "sonner";
 import InventoryTables from "./InventoryTables";
 import OrdersManagement from "./OrdersManagement";
 import RakeInfo from "./RakeInfo";
 import WeatherForecast from "./WeatherForecast";
-import RakePredictionDialog from "./RakePredictionDialog";
 
 interface AdminDashboardProps {
   userId: string;
@@ -28,9 +24,6 @@ const AdminDashboard = ({ userId }: AdminDashboardProps) => {
     newOrders: 0,
     pendingOrders: 0,
   });
-  const [loading, setLoading] = useState(false);
-  const [predictions, setPredictions] = useState<any[]>([]);
-  const [showPredictions, setShowPredictions] = useState(false);
 
   useEffect(() => {
     loadStats();
@@ -65,32 +58,6 @@ const AdminDashboard = ({ userId }: AdminDashboardProps) => {
     }
   };
 
-  const handleRakePrediction = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke(
-        "rake-prediction",
-        {
-          body: { userId },
-        }
-      );
-
-      if (error) throw error;
-
-      if (data.predictions && data.predictions.length > 0) {
-        setPredictions(data.predictions);
-        setShowPredictions(true);
-        toast.success(`Analyzed ${data.orderCount} order(s) successfully!`);
-      } else {
-        toast.info("No new orders to analyze");
-      }
-    } catch (error: any) {
-      console.error("Rake prediction error:", error);
-      toast.error(error.message || "Failed to run rake prediction");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const statCards = [
     {
@@ -145,20 +112,8 @@ const AdminDashboard = ({ userId }: AdminDashboardProps) => {
         ))}
       </div>
 
-      {/* Action Buttons */}
-      <Card className="glass-card p-6">
-        <h2 className="text-2xl font-bold mb-4">Quick Actions</h2>
-        <div className="flex flex-wrap gap-4">
-          <Button
-            className="bg-gradient-steel hover:opacity-90"
-            onClick={handleRakePrediction}
-            disabled={loading}
-          >
-            <Sparkles className="mr-2 h-4 w-4" />
-            Rake Prediction
-          </Button>
-        </div>
-      </Card>
+      {/* Orders Management - Primary Section */}
+      <OrdersManagement />
 
       {/* Rake Info and Weather Forecast */}
       <div className="grid md:grid-cols-2 gap-6">
@@ -166,18 +121,8 @@ const AdminDashboard = ({ userId }: AdminDashboardProps) => {
         <WeatherForecast />
       </div>
 
-      {/* Orders Management */}
-      <OrdersManagement />
-
       {/* Inventory Tables */}
       <InventoryTables />
-
-      {/* Rake Prediction Results Dialog */}
-      <RakePredictionDialog
-        open={showPredictions}
-        onOpenChange={setShowPredictions}
-        predictions={predictions}
-      />
     </div>
   );
 };

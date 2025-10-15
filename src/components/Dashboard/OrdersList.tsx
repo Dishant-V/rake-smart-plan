@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import PendingPaymentButton from "./PendingPaymentButton";
 
 interface OrdersListProps {
   userId: string;
@@ -100,6 +101,7 @@ const OrdersList = ({ userId }: OrdersListProps) => {
             <TableHead>Status</TableHead>
             <TableHead>Payment</TableHead>
             <TableHead>Deadline</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -124,6 +126,13 @@ const OrdersList = ({ userId }: OrdersListProps) => {
               </TableCell>
               <TableCell>
                 {format(new Date(order.deadline), "MMM dd, yyyy")}
+              </TableCell>
+              <TableCell>
+                <PendingPaymentButton
+                  orderId={order.id}
+                  amount={order.total_cost - (order.payment_amount || 0)}
+                  paymentStatus={order.payment_status}
+                />
               </TableCell>
             </TableRow>
           ))}
